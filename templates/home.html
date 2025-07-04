@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tamil Voice Chatbot</title>
+    <link rel="stylesheet" href="../static/styles.css">
+</head>
+<body>
+    <h1>Tamil Voice Chatbot</h1>
+    <button onclick="startListening()">Start Listening</button>
+    <div id="response"></div>
+    <audio id="audioPlayer" controls style="display:none"></audio>
+    <script>
+        function startListening() {
+            var recognition = new (webkitSpeechRecognition || SpeechRecognition)();
+            recognition.lang = 'ta-IN';
+            recognition.onresult = function(event) {
+                var result = event.results[event.results.length - 1][0].transcript;
+                console.log("Recognized Text:", result);
+
+                fetch('/process_audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ audio_data: result })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('response').innerText = data.response;
+                    playAudio(data.audio_file);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('response').innerText = 'Error occurred: ' + error.message;
+                });
+            };
+
+            recognition.start();
+        }
+
+        function playAudio(audioFile) {
+            var audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = audioFile;
+            audioPlayer.style.display = 'block';
+            audioPlayer.play();
+        }
+    </script>
+</body>
+</html>
